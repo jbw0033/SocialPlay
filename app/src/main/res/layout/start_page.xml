@@ -11,6 +11,6 @@
         android:textAlignment="center"
         android:text="@string/welcome"
         android:textStyle="bold"
-        android:textSize="30dp"/>
+        android:textSize="30sp"/>
 
 </FrameLayout>

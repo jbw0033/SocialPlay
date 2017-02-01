@@ -8,19 +8,20 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true">
     <Button
-        android:id="@+id/join_game_button"
+        android:id="@+id/client_button"
         android:layout_width="250dp"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:text="Join Game"/>
+        android:text="Client"/>
 
     <Button
-        android:id="@+id/create_game_button"
+        android:id="@+id/server_button"
         android:layout_width="250dp"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_below="@id/join_game_button"
-        android:text="Create Game"/>
+        android:layout_below="@id/client_button"
+        android:onClick="createServer"
+        android:text="Server"/>
     </RelativeLayout>
 
 </RelativeLayout>

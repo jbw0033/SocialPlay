@@ -11,12 +11,12 @@ import android.view.ViewGroup;
  * Created by Jeremy Woods on 1/22/2017.
  */
 
-public class UsernameFragment extends Fragment{
+public class CreateServerFragment extends Fragment {
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.username_page, container, false);
+        View view = inflater.inflate(R.layout.create_server_page, container, false);
         return view;
     }
 }

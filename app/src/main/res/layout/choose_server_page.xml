@@ -4,32 +4,41 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="25sp"
+        android:textStyle="bold"
+        android:layout_marginTop="30dp"
+        android:textAlignment="center"
+        android:text="Please select a server near you!"/>
+
     <Button
         android:layout_width="250dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="50dp"
         android:layout_gravity="center"
-        android:text="Word Match"/>
+        android:text="Jeremy A"/>
 
     <Button
         android:layout_width="250dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_gravity="center"
-        android:text="Charades"/>
+        android:text="Andrew"/>
 
     <Button
         android:layout_width="250dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_gravity="center"
-        android:text="Cards Against Humanity"/>
+        android:text="Hansel"/>
 
     <Button
         android:layout_width="250dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_gravity="center"
-        android:text="Bomb Game"/>
+        android:text="Mohamed"/>
 
 </LinearLayout>
