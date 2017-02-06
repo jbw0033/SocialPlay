@@ -1,8 +1,10 @@
 package edu.uwb.css.a545.project.socialplay;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
@@ -10,6 +12,12 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class PageHolder extends FragmentActivity implements JoinCreateFragment.PlayerListener, ChooseServerFragment.GameListener {
 
@@ -67,6 +75,26 @@ public class PageHolder extends FragmentActivity implements JoinCreateFragment.P
     }
 
     public void createGame() {
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, new Charades()).addToBackStack(null).commit();
+        Charades game = new Charades();
+        game.isServer(false);
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, game).addToBackStack(null).commit();
+    }
+
+    public void sendData(BluetoothSocket socket, byte[] data) throws IOException {
+        OutputStream outputStream = socket.getOutputStream();
+        outputStream.write(data);
+        Toast.makeText(this, "sent " + new String(data), Toast.LENGTH_SHORT)
+                .show();
+    }
+
+    public String receiveData(BluetoothSocket socket) throws IOException{
+        byte[] buffer = new byte[1024];
+        InputStream inputStream = socket.getInputStream();
+        Handler handler = new Handler();
+        int bytes = inputStream.read(buffer);
+        String readMessage = new String(buffer, 0, bytes);
+        Toast.makeText(this, "got " + readMessage, Toast.LENGTH_SHORT)
+                .show();
+        return readMessage;
     }
 }

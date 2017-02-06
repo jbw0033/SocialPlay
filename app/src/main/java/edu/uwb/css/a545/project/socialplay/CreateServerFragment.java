@@ -26,6 +26,7 @@ public class CreateServerFragment extends Fragment {
 
     private static final UUID MY_UUID = UUID.fromString("a4e3e0b2-eb83-11e6-b006-92361f002671");
     Button findPlayerButton;
+    Button startGameButton;
     ListView list;
     ArrayAdapter<String> listAdapter;
     BluetoothAdapter btAdapter;
@@ -42,8 +43,10 @@ public class CreateServerFragment extends Fragment {
         btName = (EditText) view.findViewById(R.id.word_box);
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         findPlayerButton = (Button) view.findViewById(R.id.find_players);
+        startGameButton = (Button) view.findViewById(R.id.start_game);
         list = (ListView) view.findViewById(R.id.connectedDeviceList);
         listAdapter = new ArrayAdapter<>(this.getContext(), android.R.layout.simple_list_item_1, 0);
+        startGameButton.setVisibility(View.INVISIBLE);
         list.setAdapter(listAdapter);
         list.setVisibility(View.INVISIBLE);
 
@@ -51,34 +54,44 @@ public class CreateServerFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 findPlayerButton.setVisibility(View.INVISIBLE);
+                startGameButton.setVisibility(View.VISIBLE);
                 list.setVisibility(View.VISIBLE);
                 btAdapter.setName(btName.getText().toString());
-                btName.setText("");
+//                btName.setText("");
 
                 BluetoothServerSocket tmp = null;
+//                int count = 0;
                 try {
                     tmp = btAdapter.listenUsingRfcommWithServiceRecord("Service_name", MY_UUID);
-                } catch (IOException e) {
-                }
+                } catch (IOException e) {}
                 while (true) {
                     try {
                         btsSocket = tmp.accept();
                         Toast.makeText(getActivity(), "Accepting Message", Toast.LENGTH_SHORT)
                                 .show();
-                    } catch (IOException e) {
-                    }
+                        listAdapter.add(btsSocket.getRemoteDevice().getName()+"\n"+btsSocket.getRemoteDevice().getAddress());
+//                        count++;
+                    } catch (IOException e) {}
                     if (btsSocket != null) {
                         try {
                             tmp.close();
-                        } catch (IOException e) {
-                        }
+                        } catch (IOException e) {}
                         break;
                     }
                 }
-
-                getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, new Charades()).addToBackStack(null).commit();
             }
         });
+
+        startGameButton.setOnClickListener(new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Charades game = new Charades();
+                game.setSocket(btsSocket);
+                game.isServer(true);
+                getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, game).addToBackStack(null).commit();
+            }
+        });
+
 
         return view;
     }

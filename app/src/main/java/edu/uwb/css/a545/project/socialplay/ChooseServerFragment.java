@@ -92,8 +92,6 @@ public class ChooseServerFragment extends Fragment {
             // Cancel discovery because it's costly and we're about to connect
             btAdapter.cancelDiscovery();
 
-            game = new Charades();
-
             // Get the device MAC address, which is the last 17 chars in the View
             String info = ((TextView) v).getText().toString();
             String address = info.substring(info.length() - 17);
@@ -111,17 +109,21 @@ public class ChooseServerFragment extends Fragment {
                 tmp = btAdapter.getRemoteDevice(address).createRfcommSocketToServiceRecord(MY_UUID);
                 Toast.makeText(getActivity(), "Joined " + btAdapter.getRemoteDevice(address).getName() + "'s game", Toast.LENGTH_SHORT)
                         .show();
-            } catch (IOException e) {
-            }
+            } catch (IOException e) {}
 
             bTSocket = tmp;
+
             try {
                 bTSocket.connect();
-            } catch (IOException e) {
-            }
+            } catch (IOException e) {}
 
-            GameListener parent = (GameListener) getActivity();
-            parent.createGame();
+            game = new Charades();
+            game.setSocket(bTSocket);
+            game.isServer(false);
+            getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, game).addToBackStack(null).commit();
+
+//            GameListener parent = (GameListener) getActivity();
+//            parent.createGame();
         }
     };
 }
