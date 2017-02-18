@@ -11,4 +11,12 @@
         android:text="Waiting for additional players..."
         android:id="@+id/guessbox"/>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/guessedButton"
+        android:text="I have been guessed"/>
+
 </RelativeLayout>

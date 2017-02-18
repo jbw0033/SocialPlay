@@ -74,27 +74,29 @@ public class PageHolder extends FragmentActivity implements JoinCreateFragment.P
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, new CreateServerFragment()).addToBackStack(null).commit();
     }
 
-    public void createGame() {
+    public void createGame(BluetoothChatService service) {
         Charades game = new Charades();
         game.isServer(false);
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, game).addToBackStack(null).commit();
+
+        game.setClientService(service);
     }
 
-    public void sendData(BluetoothSocket socket, byte[] data) throws IOException {
-        OutputStream outputStream = socket.getOutputStream();
-        outputStream.write(data);
-        Toast.makeText(this, "sent " + new String(data), Toast.LENGTH_SHORT)
-                .show();
-    }
-
-    public String receiveData(BluetoothSocket socket) throws IOException{
-        byte[] buffer = new byte[1024];
-        InputStream inputStream = socket.getInputStream();
-        Handler handler = new Handler();
-        int bytes = inputStream.read(buffer);
-        String readMessage = new String(buffer, 0, bytes);
-        Toast.makeText(this, "got " + readMessage, Toast.LENGTH_SHORT)
-                .show();
-        return readMessage;
-    }
+//    public void sendData(BluetoothSocket socket, byte[] data) throws IOException {
+//        OutputStream outputStream = socket.getOutputStream();
+//        outputStream.write(data);
+//        Toast.makeText(this, "sent " + new String(data), Toast.LENGTH_SHORT)
+//                .show();
+//    }
+//
+//    public String receiveData(BluetoothSocket socket) throws IOException{
+//        byte[] buffer = new byte[1024];
+//        InputStream inputStream = socket.getInputStream();
+//        Handler handler = new Handler();
+//        int bytes = inputStream.read(buffer);
+//        String readMessage = new String(buffer, 0, bytes);
+//        Toast.makeText(this, "got " + readMessage, Toast.LENGTH_SHORT)
+//                .show();
+//        return readMessage;
+//    }
 }

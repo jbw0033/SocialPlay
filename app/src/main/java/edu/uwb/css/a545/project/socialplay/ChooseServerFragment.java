@@ -10,19 +10,24 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
 
@@ -35,19 +40,84 @@ import static android.R.attr.filter;
 
 public class ChooseServerFragment extends Fragment {
 
-    public interface GameListener {
-        void createGame();
+    interface GameListener {
+        void createGame(BluetoothChatService service);
     }
 
-    private static final String EXTRA_DEVICE_ADDRESS = "device_address";
+    // Intent request codes
+    private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
+    private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
+    private static final int REQUEST_ENABLE_BT = 3;
+
+    public static final String EXTRA_DEVICE_ADDRESS = "device_address";
     ArrayAdapter<String> listAdapter;
     IntentFilter filter;
-    BroadcastReceiver receiver;
     ListView list;
-    BluetoothAdapter btAdapter;
-    Charades game;
 
-    private static final UUID MY_UUID = UUID.fromString("a4e3e0b2-eb83-11e6-b006-92361f002671");
+    /**
+     * Local Bluetooth adapter
+     */
+    BluetoothAdapter mBtAdapter = null;
+
+    BroadcastReceiver receiver;
+
+    /**
+     * Member object for the chat services
+     */
+    private BluetoothChatService mChatService = null;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+        // Get local Bluetooth adapter
+        mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        // If the adapter is null, then Bluetooth is not supported
+        if (mBtAdapter == null) {
+            FragmentActivity activity = getActivity();
+            Toast.makeText(activity, "Bluetooth is not available", Toast.LENGTH_LONG).show();
+            activity.finish();
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // If BT is not on, request that it be enabled.
+        // setupChat() will then be called during onActivityResult
+        if (!mBtAdapter.isEnabled()) {
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+            // Otherwise, setup the chat session
+        } else if (mChatService == null) {
+            setupChat();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mChatService != null) {
+            mChatService.stop();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // Performing this check in onResume() covers the case in which BT was
+        // not enabled during onStart(), so we were paused to enable it...
+        // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
+        if (mChatService != null) {
+            // Only if the state is STATE_NONE, do we know that we haven't started already
+            if (mChatService.getState() == BluetoothChatService.STATE_NONE) {
+                // Start the Bluetooth chat services
+                mChatService.start();
+            }
+        }
+    }
 
     @Nullable
     @Override
@@ -68,29 +138,38 @@ public class ChooseServerFragment extends Fragment {
                 String action = intent.getAction();
                 if(BluetoothDevice.ACTION_FOUND.equals(action)){
                     BluetoothDevice device = intent.getParcelableExtra( BluetoothDevice.EXTRA_DEVICE);
-                    listAdapter.add(device.getName()+"\n"+device.getAddress());
+                    if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                        listAdapter.add(device.getName()+"\n"+device.getAddress());
+                    }
                 }
             }
         };
 
-        btAdapter = BluetoothAdapter.getDefaultAdapter();
-        for (BluetoothDevice device : btAdapter.getBondedDevices()) {
+        mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+        for (BluetoothDevice device : mBtAdapter.getBondedDevices()) {
             listAdapter.add(device.getName() + "\n" + device.getAddress());
         }
 
         filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         getActivity().registerReceiver(receiver,filter);
 
-        btAdapter = BluetoothAdapter.getDefaultAdapter();
-        btAdapter.startDiscovery();
+        mBtAdapter.startDiscovery();
         return view;
+    }
+
+    /**
+     * Set up the UI and background operations for chat.
+     */
+    private void setupChat() {
+        // Initialize the BluetoothChatService to perform bluetooth connections
+        mChatService = new BluetoothChatService(getActivity(), new NewHandler());
     }
 
     private AdapterView.OnItemClickListener mDeviceClickListener
             = new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {
             // Cancel discovery because it's costly and we're about to connect
-            btAdapter.cancelDiscovery();
+            mBtAdapter.cancelDiscovery();
 
             // Get the device MAC address, which is the last 17 chars in the View
             String info = ((TextView) v).getText().toString();
@@ -100,30 +179,83 @@ public class ChooseServerFragment extends Fragment {
             Intent intent = new Intent();
             intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
 
-            // Set result and finish this Activity
-            getActivity().setResult(Activity.RESULT_OK, intent);
+            connectDevice(intent, true);
 
-            BluetoothSocket bTSocket;
-            BluetoothSocket tmp = null;
-            try {
-                tmp = btAdapter.getRemoteDevice(address).createRfcommSocketToServiceRecord(MY_UUID);
-                Toast.makeText(getActivity(), "Joined " + btAdapter.getRemoteDevice(address).getName() + "'s game", Toast.LENGTH_SHORT)
-                        .show();
-            } catch (IOException e) {}
-
-            bTSocket = tmp;
-
-            try {
-                bTSocket.connect();
-            } catch (IOException e) {}
-
-            game = new Charades();
-            game.setSocket(bTSocket);
-            game.isServer(false);
-            getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, game).addToBackStack(null).commit();
-
-//            GameListener parent = (GameListener) getActivity();
-//            parent.createGame();
-        }
+            GameListener parent = (GameListener) getActivity();
+            parent.createGame(mChatService);
+       }
     };
+
+    /**
+     * Establish connection with other device
+     *
+     * @param data   An {@link Intent} with {@link ChooseServerFragment#EXTRA_DEVICE_ADDRESS} extra.
+     * @param secure Socket Security type - Secure (true) , Insecure (false)
+     */
+    private void connectDevice(Intent data, boolean secure) {
+        // Get the device MAC address
+        String address = data.getExtras()
+                .getString(ChooseServerFragment.EXTRA_DEVICE_ADDRESS);
+        // Get the BluetoothDevice object
+        BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
+        // Attempt to connect to the device
+        mChatService.connect(device, secure);
+    }
+
+    private class NewHandler extends Handler {
+        public String mConnectedDeviceName = null;
+        @Override
+        public void handleMessage(Message msg) {
+            FragmentActivity activity = getActivity();
+            switch (msg.what) {
+                case Constants.MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1) {
+                        case BluetoothChatService.STATE_CONNECTED:
+//                            setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
+//                            mConversationArrayAdapter.clear();
+                            break;
+                        case BluetoothChatService.STATE_CONNECTING:
+//                            setStatus(R.string.title_connecting);
+                            break;
+                        case BluetoothChatService.STATE_LISTEN:
+                        case BluetoothChatService.STATE_NONE:
+//                            setStatus(R.string.title_not_connected);
+                            break;
+                    }
+                    break;
+                case Constants.MESSAGE_WRITE:
+                    byte[] writeBuf = (byte[]) msg.obj;
+                    // construct a string from the buffer
+                    String writeMessage = new String(writeBuf);
+                    break;
+                case Constants.MESSAGE_READ:
+                    byte[] readBuf = (byte[]) msg.obj;
+                    // construct a string from the valid bytes in the buffer
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+                    TextView changeBox = (TextView) getActivity().getSupportFragmentManager().findFragmentById(R.id.fragment_holder).getView().findViewById(R.id.guessbox);
+                    changeBox.setText(readMessage);
+                    if(readMessage.equals("You are it")) {
+                        Button guessed = (Button) getActivity().getSupportFragmentManager().findFragmentById(R.id.fragment_holder).getView().findViewById(R.id.guessedButton);
+                        guessed.setVisibility(View.VISIBLE);
+                    }
+
+                    break;
+                case Constants.MESSAGE_DEVICE_NAME:
+                    // save the connected device's name
+                    mConnectedDeviceName = msg.getData().getString(Constants.DEVICE_NAME);
+                    if (null != activity) {
+                        Toast.makeText(activity, "Connected to "
+                                + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case Constants.MESSAGE_TOAST:
+                    if (null != activity) {
+                        Toast.makeText(activity, msg.getData().getString(Constants.TOAST),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+            }
+        }
+
+    }
 }
