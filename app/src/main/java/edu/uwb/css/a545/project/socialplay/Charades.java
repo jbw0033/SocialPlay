@@ -82,8 +82,13 @@ public class Charades extends Fragment {
         if (server) {
             int itPlayer = (int)(Math.random()*(mServices.size() + 1));
                 if(itPlayer == mServices.size()) {
+//                    guessed = (Button) getView().findViewById(R.id.guessedButton);
+//                    guessing = (TextView) getView().findViewById(R.id.guessbox);
                     guessing.setText("You are it");
                     it = true;
+                    if(it) {
+                        guessed.setVisibility(View.VISIBLE);
+                    }
                     for(int i = 0; i < mServices.size(); i++) {
                         sendMessage("You are not it", i);
                     }
