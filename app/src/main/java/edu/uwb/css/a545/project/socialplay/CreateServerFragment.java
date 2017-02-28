@@ -11,6 +11,7 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,11 +19,13 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -232,10 +235,27 @@ public class CreateServerFragment extends Fragment {
                     // construct a string from the valid bytes in the buffer
                     String readMessage = new String(readBuf, 0, msg.arg1);
                     if(readMessage.equals("Done")) {
-                        Charades game = new Charades();
-                        game.setServerServices(mServices);
-                        game.isServer(true);
-                        getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, game).commit();
+//                        Charades game = new Charades();
+//                        game.setServerServices(mServices);
+//                        game.isServer(true);
+                        Charades game = (Charades) getActivity().getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
+
+                        game.changeText();
+
+                        Button guessed = (Button) getActivity().getSupportFragmentManager().findFragmentById(R.id.fragment_holder).getView().findViewById(R.id.guessedButton);
+                        RelativeLayout.LayoutParams absParams =
+                                (RelativeLayout.LayoutParams)guessed.getLayoutParams();
+
+                        DisplayMetrics displaymetrics = new DisplayMetrics();
+                        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+                        int width = displaymetrics.widthPixels - guessed.getMeasuredWidth() - 300;
+                        int height = displaymetrics.heightPixels - guessed.getMeasuredHeight() - 300;
+
+
+                        Random r = new Random();
+
+                        guessed.setX((float) r.nextInt(width ));
+                        guessed.setY((float) r.nextInt(height ));
                     }
                     break;
                 case Constants.MESSAGE_DEVICE_NAME:
