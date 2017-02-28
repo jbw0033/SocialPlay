@@ -139,7 +139,9 @@ public class ChooseServerFragment extends Fragment {
                 if(BluetoothDevice.ACTION_FOUND.equals(action)){
                     BluetoothDevice device = intent.getParcelableExtra( BluetoothDevice.EXTRA_DEVICE);
                     if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-                        listAdapter.add(device.getName()+"\n"+device.getAddress());
+                        if(device.getName()!=null&&device.getName().equals("Social Play Server")) {
+                            listAdapter.add(device.getName() + "\n" + device.getAddress());
+                        }
                     }
                 }
             }
@@ -147,7 +149,9 @@ public class ChooseServerFragment extends Fragment {
 
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
         for (BluetoothDevice device : mBtAdapter.getBondedDevices()) {
-            listAdapter.add(device.getName() + "\n" + device.getAddress());
+            if(device.getName()!=null&&device.getName().equals("Social Play Server")){
+                listAdapter.add(device.getName() + "\n" + device.getAddress());
+            }
         }
 
         filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);

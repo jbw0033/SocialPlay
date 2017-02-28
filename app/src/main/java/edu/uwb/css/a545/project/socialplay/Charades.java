@@ -85,18 +85,18 @@ public class Charades extends Fragment {
                     guessing.setText("You are it");
                     it = true;
                     for(int i = 0; i < mServices.size(); i++) {
-                        sendMessage("You are guessing", i);
+                        sendMessage("You are not it", i);
                     }
                 }
                 else {
-                    guessing.setText("You are guessing");
+                    guessing.setText("You are not it");
                     it = false;
                     for(int i = 0; i < mServices.size(); i++) {
                         if(itPlayer == i) {
                             sendMessage("You are it", i);
                         }
                         else {
-                            sendMessage("You are guessing", i);
+                            sendMessage("You are not it", i);
                         }
                     }
                 }

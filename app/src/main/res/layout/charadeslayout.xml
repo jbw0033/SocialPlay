@@ -17,6 +17,6 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:id="@+id/guessedButton"
-        android:text="I have been guessed"/>
+        android:text="Tag Someone Else!"/>
 
 </RelativeLayout>

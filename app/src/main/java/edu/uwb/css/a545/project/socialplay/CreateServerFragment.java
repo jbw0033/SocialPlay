@@ -36,7 +36,8 @@ public class CreateServerFragment extends Fragment {
     Button startGameButton;
     ListView list;
     ArrayAdapter<String> listAdapter;
-    EditText btName;
+    String oldname;
+   // EditText btName;
 
     // Intent request codes
     private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
@@ -71,7 +72,7 @@ public class CreateServerFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.create_server_page, container, false);
 
-        btName = (EditText) view.findViewById(R.id.word_box);
+       // btName = (EditText) view.findViewById(R.id.word_box);
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
         findPlayerButton = (Button) view.findViewById(R.id.find_players);
         startGameButton = (Button) view.findViewById(R.id.start_game);
@@ -88,8 +89,11 @@ public class CreateServerFragment extends Fragment {
                 findPlayerButton.setVisibility(View.INVISIBLE);
                 startGameButton.setVisibility(View.VISIBLE);
                 list.setVisibility(View.VISIBLE);
-                mBtAdapter.setName(btName.getText().toString());
-                btName.setText("");
+                //Bluetooth Name
+                oldname=mBtAdapter.getName();
+                mBtAdapter.setName("Social Play Server");
+
+               // btName.setText("");
 
                 if (mServices.get(0) != null) {
                     // Only if the state is STATE_NONE, do we know that we haven't started already
@@ -118,6 +122,7 @@ public class CreateServerFragment extends Fragment {
                     mServices.remove(mServices.size() - 1);
                 }
                 getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, game).addToBackStack(null).commit();
+                mBtAdapter.setName(oldname);
             }
         });
 
@@ -147,6 +152,7 @@ public class CreateServerFragment extends Fragment {
                 mServices.get(i).stop();
             }
         }
+
     }
 
     @Override
