@@ -2,8 +2,12 @@ package edu.uwb.css.a545.project.socialplay;
 
 import android.bluetooth.BluetoothSocket;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +17,7 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Created by Jeremy Woods on 2/5/2017.
@@ -22,6 +27,7 @@ public class Charades extends Fragment {
 
     TextView guessing;
     Button guessed;
+    Button end;
     boolean server;
     boolean it = false;
     ArrayList<String> guessingWords;
@@ -37,6 +43,47 @@ public class Charades extends Fragment {
         View view = inflater.inflate(R.layout.charadeslayout, container, false);
         guessing = (TextView) view.findViewById(R.id.guessbox);
         guessed = (Button) view.findViewById(R.id.guessedButton);
+        end = (Button) view.findViewById(R.id.EndGameButton);
+        end.setVisibility(View.INVISIBLE);
+
+        new CountDownTimer(30000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+            }
+
+            public void onFinish() {
+                endGame();
+            }
+        }.start();
+
+        guessing.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if(charSequence.toString().equals("Time's up!"))
+                {
+                    end.setVisibility(View.VISIBLE);
+                    if(guessed.getVisibility()==View.VISIBLE)
+                    {
+                        guessing.setText("You Lose!");
+                    }
+                    else
+                    {
+                        guessing.setText("You didn't lose!");
+                    }
+                    guessed.setEnabled(false);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
 
         changeText();
 
@@ -44,9 +91,26 @@ public class Charades extends Fragment {
             guessed.setVisibility(View.INVISIBLE);
         }
 
+        end.setOnClickListener(new Button.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                //gracefully exit the game
+            }
+        });
+
         guessed.setOnClickListener(new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
+                DisplayMetrics displaymetrics = new DisplayMetrics();
+                getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+                int width = displaymetrics.widthPixels - guessed.getMeasuredWidth() - 300;
+                int height = displaymetrics.heightPixels - guessed.getMeasuredHeight() - 300;
+
+
+                Random r = new Random();
+
+                guessed.setX((float) r.nextInt(width ));
+                guessed.setY((float) r.nextInt(height ));
                 if(server) {
                     changeText();
                     if(!it) {
@@ -77,6 +141,15 @@ public class Charades extends Fragment {
         return server;
     }
 
+    public void endGame(){
+
+        if(server) {
+            for (int i = 0; i < mServices.size(); i++) {
+                sendMessage("Time's up!", i);
+            }
+            guessing.setText("Time's up!");
+        }
+    }
 
     public void changeText() {
         if (server) {

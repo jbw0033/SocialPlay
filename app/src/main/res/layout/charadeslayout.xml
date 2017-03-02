@@ -19,4 +19,13 @@
         android:id="@+id/guessedButton"
         android:text="Tag Someone Else!"/>
 
+    <Button
+        android:text="Quit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toStartOf="@+id/guessedButton"
+        android:layout_marginTop="25dp"
+        android:id="@+id/EndGameButton" />
+
 </RelativeLayout>

@@ -251,8 +251,8 @@ public class CreateServerFragment extends Fragment {
                         Button guessed = (Button) getActivity().getSupportFragmentManager().findFragmentById(R.id.fragment_holder).getView().findViewById(R.id.guessedButton);
                         RelativeLayout.LayoutParams absParams =
                                 (RelativeLayout.LayoutParams)guessed.getLayoutParams();
-
-                        DisplayMetrics displaymetrics = new DisplayMetrics();
+//button moving moved to charades.java
+      /*                  DisplayMetrics displaymetrics = new DisplayMetrics();
                         getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
                         int width = displaymetrics.widthPixels - guessed.getMeasuredWidth() - 300;
                         int height = displaymetrics.heightPixels - guessed.getMeasuredHeight() - 300;
@@ -261,7 +261,7 @@ public class CreateServerFragment extends Fragment {
                         Random r = new Random();
 
                         guessed.setX((float) r.nextInt(width ));
-                        guessed.setY((float) r.nextInt(height ));
+                        guessed.setY((float) r.nextInt(height ));*/
                     }
                     break;
                 case Constants.MESSAGE_DEVICE_NAME:
