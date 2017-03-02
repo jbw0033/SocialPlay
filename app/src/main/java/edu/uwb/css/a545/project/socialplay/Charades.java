@@ -1,6 +1,7 @@
 package edu.uwb.css.a545.project.socialplay;
 
 import android.bluetooth.BluetoothSocket;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
@@ -40,13 +41,15 @@ public class Charades extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.charadeslayout, container, false);
+        final View view = inflater.inflate(R.layout.charadeslayout, container, false);
         guessing = (TextView) view.findViewById(R.id.guessbox);
         guessed = (Button) view.findViewById(R.id.guessedButton);
         end = (Button) view.findViewById(R.id.EndGameButton);
         end.setVisibility(View.INVISIBLE);
+        Random r = new Random();
+        int time = r.nextInt(30000-10000) + 10000;
 
-        new CountDownTimer(30000, 1000) {
+        new CountDownTimer(time, 1000) {
 
             public void onTick(long millisUntilFinished) {
             }
@@ -95,6 +98,7 @@ public class Charades extends Fragment {
             @Override
             public void onClick(View v) {
                 //gracefully exit the game
+
             }
         });
 
