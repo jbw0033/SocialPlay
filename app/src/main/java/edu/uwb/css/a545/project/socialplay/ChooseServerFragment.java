@@ -15,6 +15,7 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -104,6 +105,7 @@ public class ChooseServerFragment extends Fragment {
         if (mChatService != null) {
             mChatService.stop();
         }
+        getActivity().unregisterReceiver(receiver);
     }
 
     @Override
@@ -142,9 +144,11 @@ public class ChooseServerFragment extends Fragment {
                 if(BluetoothDevice.ACTION_FOUND.equals(action)){
                     BluetoothDevice device = intent.getParcelableExtra( BluetoothDevice.EXTRA_DEVICE);
                     if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-                        if(device.getName()!=null&&device.getName().equals("Social Play Server")) {
+                        if (device.getName() != null && device.getName().contains("Social Play Server")) {
                             listAdapter.add(device.getName() + "\n" + device.getAddress());
                         }
+                    } else if (device.getName() != null && mBtAdapter.getName().contains("Social Play Server")) {
+                        listAdapter.add(device.getName() + "\n" + device.getAddress());
                     }
                 }
             }
@@ -152,7 +156,9 @@ public class ChooseServerFragment extends Fragment {
 
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
         for (BluetoothDevice device : mBtAdapter.getBondedDevices()) {
-            if(device.getName()!=null&&device.getName().equals("Social Play Server")){
+            if (device.getName() != null && device.getName().contains("Social Play Server")) {
+                listAdapter.add(device.getName() + "\n" + device.getAddress());
+            } else if (device.getName() != null && mBtAdapter.getName().contains(device.getName())) {
                 listAdapter.add(device.getName() + "\n" + device.getAddress());
             }
         }
@@ -188,8 +194,14 @@ public class ChooseServerFragment extends Fragment {
 
             connectDevice(intent, true);
 
-            GameListener parent = (GameListener) getActivity();
-            parent.createGame(mChatService);
+            while (mChatService.getState() == BluetoothChatService.STATE_CONNECTING) {
+            }
+            if (mChatService.getState() == BluetoothChatService.STATE_CONNECTED) {
+                GameListener parent = (GameListener) getActivity();
+                parent.createGame(mChatService);
+            }
+//                Toast.makeText(getActivity(), "State: " + mChatService.getState(),
+//                        Toast.LENGTH_SHORT).show();
        }
     };
 
@@ -218,15 +230,11 @@ public class ChooseServerFragment extends Fragment {
                 case Constants.MESSAGE_STATE_CHANGE:
                     switch (msg.arg1) {
                         case BluetoothChatService.STATE_CONNECTED:
-//                            setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
-//                            mConversationArrayAdapter.clear();
                             break;
                         case BluetoothChatService.STATE_CONNECTING:
-//                            setStatus(R.string.title_connecting);
                             break;
                         case BluetoothChatService.STATE_LISTEN:
                         case BluetoothChatService.STATE_NONE:
-//                            setStatus(R.string.title_not_connected);
                             break;
                     }
                     break;
@@ -258,6 +266,10 @@ public class ChooseServerFragment extends Fragment {
                         guessed.setY((float) r.nextInt(height ));
 
                         guessed.setVisibility(View.VISIBLE);
+                    } else if (readMessage.equals("Reset")) {
+                        mChatService.stop();
+                        getActivity().getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                        getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, new JoinCreateFragment()).commit();
                     }
 
                     break;

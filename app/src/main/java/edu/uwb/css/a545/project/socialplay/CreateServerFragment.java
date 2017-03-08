@@ -61,6 +61,14 @@ public class CreateServerFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+        //Bluetooth Name
+        oldname = mBtAdapter.getName();
+        if (!oldname.contains("Social Play Server")) {
+            while (!mBtAdapter.setName("Social Play Server " + oldname)) {
+            }
+            ;
+        }
+
         mServices = new ArrayList<BluetoothChatService>();
 
         // If the adapter is null, then Bluetooth is not supported
@@ -92,23 +100,18 @@ public class CreateServerFragment extends Fragment {
                 findPlayerButton.setVisibility(View.INVISIBLE);
                 startGameButton.setVisibility(View.VISIBLE);
                 list.setVisibility(View.VISIBLE);
-                //Bluetooth Name
-                oldname=mBtAdapter.getName();
-                mBtAdapter.setName("Social Play Server");
-
-               // btName.setText("");
 
                 if (mServices.get(0) != null) {
                     // Only if the state is STATE_NONE, do we know that we haven't started already
                     if (mServices.get(0).getState() == BluetoothChatService.STATE_NONE) {
                         // Start the Bluetooth chat services
-                        for (int i = 0; i < mServices.size(); i++) {
+//                        for (int i = 0; i < mServices.size(); i++) {
                             try {
-                                mServices.get(i).start();
+                                mServices.get(0).start();
                             } catch (NullPointerException e) {
                                 Toast.makeText(getActivity(), "Maximum devices connected", Toast.LENGTH_SHORT).show();
                             }
-                        }
+//                        }
                     }
                 }
 
@@ -118,14 +121,20 @@ public class CreateServerFragment extends Fragment {
         startGameButton.setOnClickListener(new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (oldname.contains("Social Play Server")) {
+                    oldname = oldname.replace("Social Play Server ", "");
+                }
+                mBtAdapter.setName(oldname);
                 Charades game = new Charades();
+                for (int i = mServices.size() - 1; i > -1; i--) {
+                    if (mServices.get(i).getState() != BluetoothChatService.STATE_CONNECTED) {
+                        mServices.get(mServices.size() - 1).stop();
+                        mServices.remove(mServices.size() - 1);
+                    }
+                }
                 game.setServerServices(mServices);
                 game.isServer(true);
-                if(mServices.size() < 7) {
-                    mServices.remove(mServices.size() - 1);
-                }
                 getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, game).addToBackStack(null).commit();
-                mBtAdapter.setName(oldname);
             }
         });
 
@@ -150,12 +159,18 @@ public class CreateServerFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mServices.get(0) != null) {
-            for(int i = 0; i < mServices.size(); i++) {
+        if (oldname != null) {
+            if (oldname.contains("Social Play Server")) {
+                oldname = oldname.replace("Social Play Server ", "");
+            }
+            mBtAdapter.setName(oldname);
+        }
+        if (mServices.size() > 0) {
+            for (int i = 0; i < mServices.size(); i++) {
                 mServices.get(i).stop();
             }
+            mServices.clear();
         }
-
     }
 
     @Override
@@ -212,8 +227,7 @@ public class CreateServerFragment extends Fragment {
                 case Constants.MESSAGE_STATE_CHANGE:
                     switch (msg.arg1) {
                         case BluetoothChatService.STATE_CONNECTED:
-//                            setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
-                            if(mServices.size() != 7) {
+                            if (mServices.size() <= 7) {
                                 mServices.add(new BluetoothChatService(getActivity(), new NewHandler()));
                                 try {
                                     mServices.get(mServices.size() - 1).start();
@@ -241,27 +255,8 @@ public class CreateServerFragment extends Fragment {
                     // construct a string from the valid bytes in the buffer
                     String readMessage = new String(readBuf, 0, msg.arg1);
                     if(readMessage.equals("Done")) {
-//                        Charades game = new Charades();
-//                        game.setServerServices(mServices);
-//                        game.isServer(true);
                         Charades game = (Charades) getActivity().getSupportFragmentManager().findFragmentById(R.id.fragment_holder);
-
                         game.changeText();
-
-                        Button guessed = (Button) getActivity().getSupportFragmentManager().findFragmentById(R.id.fragment_holder).getView().findViewById(R.id.guessedButton);
-                        RelativeLayout.LayoutParams absParams =
-                                (RelativeLayout.LayoutParams)guessed.getLayoutParams();
-//button moving moved to charades.java
-      /*                  DisplayMetrics displaymetrics = new DisplayMetrics();
-                        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-                        int width = displaymetrics.widthPixels - guessed.getMeasuredWidth() - 300;
-                        int height = displaymetrics.heightPixels - guessed.getMeasuredHeight() - 300;
-
-
-                        Random r = new Random();
-
-                        guessed.setX((float) r.nextInt(width ));
-                        guessed.setY((float) r.nextInt(height ));*/
                     }
                     break;
                 case Constants.MESSAGE_DEVICE_NAME:
@@ -275,11 +270,15 @@ public class CreateServerFragment extends Fragment {
                     break;
                 case Constants.MESSAGE_TOAST:
                     listAdapter.remove(mConnectedDeviceName);
-                    for(int i = 0; i < mServices.size(); i++) {
-                        if(mServices.get(i).getState() != BluetoothChatService.STATE_CONNECTED) {
-                            mServices.remove(i);
-                            break;
+                    if (mServices.size() > 0) {
+                        for (int i = mServices.size() - 1; i > -1; i--) {
+                            if (mServices.get(i).getState() == BluetoothChatService.STATE_LISTEN) {
+                                mServices.get(i).stop();
+                                mServices.remove(i);
+                            }
                         }
+                        mServices.add(new BluetoothChatService(getActivity(), new NewHandler()));
+                        mServices.get(0).start();
                     }
                     if (null != activity) {
                         Toast.makeText(activity, msg.getData().getString(Constants.TOAST),

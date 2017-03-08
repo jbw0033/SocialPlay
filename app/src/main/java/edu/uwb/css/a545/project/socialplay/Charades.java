@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
@@ -69,6 +70,7 @@ public class Charades extends Fragment {
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 if(charSequence.toString().equals("Time's up!"))
                 {
+
                     end.setVisibility(View.VISIBLE);
                     if(guessed.getVisibility()==View.VISIBLE)
                     {
@@ -97,8 +99,16 @@ public class Charades extends Fragment {
         end.setOnClickListener(new Button.OnClickListener(){
             @Override
             public void onClick(View v) {
-                //gracefully exit the game
-
+                if (server) {
+                    for (int i = 0; i < mServices.size(); i++) {
+                        sendMessage("Reset", i);
+                        mServices.get(i).stop();
+                    }
+                } else {
+                    mChatService.stop();
+                }
+                getActivity().getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_holder, new JoinCreateFragment()).commit();
             }
         });
 
@@ -159,8 +169,6 @@ public class Charades extends Fragment {
         if (server) {
             int itPlayer = (int)(Math.random()*(mServices.size() + 1));
                 if(itPlayer == mServices.size()) {
-//                    guessed = (Button) getView().findViewById(R.id.guessedButton);
-//                    guessing = (TextView) getView().findViewById(R.id.guessbox);
                     guessing.setText("You are it");
                     it = true;
                     if(it) {
@@ -195,14 +203,12 @@ public class Charades extends Fragment {
         // Check that we're actually connected before trying anything
         if(server) {
             if (mServices.get(0).getState() != BluetoothChatService.STATE_CONNECTED) {
-//            if(mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
                 Toast.makeText(getActivity(), R.string.not_connected, Toast.LENGTH_SHORT).show();
                 return;
             }
         }
         else {
             if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
-//            if(mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
                 Toast.makeText(getActivity(), R.string.not_connected, Toast.LENGTH_SHORT).show();
                 return;
             }
